@@ -1,0 +1,145 @@
+// C++ code
+//
+/*
+  Detect motion from one of three photoresistors
+  and move the servo toward the motion.  Turn the 
+  LED's on for a brief period when motion is detected.
+*/
+
+#include <Servo.h>
+
+// Photoresistors for motion detection
+// on analog in pins.
+const int MOTION_LEFT = 0;
+const int MOTION_CENTER = 1;
+const int MOTION_RIGHT = 2;
+
+// LEDs for eyes on digital out pins.
+const int RIGHT_EYE_LED = 12;
+const int LEFT_EYE_LED = 13;
+
+// Servo for skull turning.
+const int SERVO = 9;
+
+// Servo positions based on motion.
+const int LEFT = 0;
+const int CENTER = 90;
+const int RIGHT = 180;
+
+// Make the prior reading for light
+// levels global variables so that we
+// can measure the difference
+// between readings.
+int oldLightLevelLeft = -1,
+    oldLightLevelCenter = -1,
+    oldLightLevelRight = -1;
+
+// A timer for dimming the eyes and a boolean
+// for whether they're on or not.
+int timer = 0;
+bool eyesLit = false;
+
+// The servo.
+Servo skullHeadServo;
+
+void setup()
+{
+  skullHeadServo.attach(SERVO, 500, 2500);
+  pinMode(RIGHT_EYE_LED, OUTPUT);
+  pinMode(LEFT_EYE_LED, OUTPUT);
+}
+
+void loop() {
+  int lightLevelLeft, 
+      lightLevelCenter,
+      lightLevelRight;
+  bool motion = false;
+  
+  // Increment the timer if the eyes are lit.
+  if (eyesLit) {
+    timer++;
+  }
+  
+  // Based on light levels of the three sensors,
+  // move the servo to the appropriate position.
+  // Get sensor readings.
+  lightLevelLeft = analogRead(MOTION_LEFT);
+  lightLevelCenter = analogRead(MOTION_CENTER);
+  lightLevelRight = analogRead(MOTION_RIGHT);
+  
+  // Give the sensor time to change its value significantly.
+  delay(1000);
+  
+  // Calculate the difference between the readings.
+  // (If we have a previous reading.)
+  // If one value is -1, assume they all are, if
+  // one value is not -1, assume none are.
+  if (oldLightLevelLeft != -1) {
+    if ((lightLevelLeft - oldLightLevelLeft) > 20) {
+      skullHeadServo.write(LEFT);
+      motion = true;
+    } 
+    else if ((lightLevelCenter - oldLightLevelCenter) > 20) {
+      skullHeadServo.write(CENTER);
+      motion = true;
+    }
+    else if ((lightLevelRight - oldLightLevelRight) > 20) {
+      skullHeadServo.write(RIGHT);
+      motion = true;
+    }
+  }//if oldLightLevelLeft != -1
+  
+  // If there was motion, turn on the eyes and set a counter
+  // so they eventually turn off.
+  if (motion) {
+    digitalWrite(RIGHT_EYE_LED, HIGH);
+    digitalWrite(LEFT_EYE_LED, HIGH);
+    eyesLit = true;
+    timer = 0;
+  }
+  
+  // Check the eye variables and turn the eyes off if 
+  // 6000 loops have passed.
+  if (eyesLit && timer >= 6) {
+    eyesLit = false;
+    timer = 0;
+    digitalWrite(RIGHT_EYE_LED, LOW);
+    digitalWrite(LEFT_EYE_LED, LOW);
+  }
+  
+  // Set the old readings variables to the current readings.
+  oldLightLevelLeft = lightLevelLeft;
+  oldLightLevelCenter = lightLevelCenter;
+  oldLightLevelRight = lightLevelRight;
+ 
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
